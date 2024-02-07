@@ -1,4 +1,4 @@
-#2Pract
+#
 
 Task-00
 ```sql
