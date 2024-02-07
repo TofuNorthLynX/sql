@@ -115,27 +115,66 @@ SELECT DISTINCT * FROM ord
 
 Task-06
 ```sql
+WITH pizza_s AS (
+	SELECT m1.pizza_name, m1.pizzeria_id as pi_1, m2.pizzeria_id as pi_2, m1.price FROM menu m1
+	JOIN menu m2 ON m1.pizza_name = m2.pizza_name AND m1.price = m2.price AND m1.pizzeria_id > m2.pizzeria_id
+)
 
+SELECT pizza_name, pi1.name, pi2.name, price FROM pizza_s
+JOIN pizzeria pi1 ON pi_1 = pi1.id
+JOIN pizzeria pi2 ON pi_2 = pi2.id
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/24d17b0e-29a8-4530-94e4-70d5aaa9b375)
 
 Task-07
 ```sql
-
+INSERT INTO menu VALUES(19, 2, 'greek pizza', 800)
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/1fe0919e-da3a-4997-85dc-3c63664a5a8a)
 
 Task-08
 ```sql
-
+INSERT INTO menu VALUES(
+	(SELECT MAX(id) FROM menu) +1, 
+	(SELECT id FROM pizzeria
+	WHERE name = 'Dominos'), 
+	'sicilian pizza', 900)
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/89f8dbd7-0402-4c3c-90cf-978f67add696)
 
 Task-09
 ```sql
-
+INSERT INTO person_visits VALUES(
+	(SELECT MAX(id) FROM person_visits) +1,
+	(SELECT id FROM person
+	WHERE name = 'Denis'),
+	(SELECT id FROM pizzeria
+	WHERE name = 'Dominos'), 
+	'2022-02-24'),
+	((SELECT MAX(id) FROM person_visits) +2, 
+	(SELECT id FROM person
+	WHERE name = 'Irina'),
+	(SELECT id FROM pizzeria
+	WHERE name = 'Dominos'), 
+	'2022-02-24')
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/95095131-e28c-4d33-bd8c-0fa1554cd127)
 
 Task-10
-```sql
-
+```
+INSERT INTO person_visits VALUES(
+	(SELECT MAX(id) FROM person_visits) +1,
+	(SELECT id FROM person
+	WHERE name = 'Denis'),
+	(SELECT id FROM menu
+	WHERE pizza_name = 'sicilian pizza'), 
+	'2022-02-24'),
+	((SELECT MAX(id) FROM person_visits) +2, 
+	(SELECT id FROM person
+	WHERE name = 'Irina'),
+	(SELECT id FROM menu
+	WHERE pizza_name = 'sicilian pizza'), 
+	'2022-02-24')
 ```
 
 Task-11
