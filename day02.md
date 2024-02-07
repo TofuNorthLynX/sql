@@ -83,20 +83,58 @@ ORDER BY 1;
 
 Task-07
 ```sql
-
+SELECT 
+	pz.name AS pizzeria_name,
+	p.name AS person_name,
+	m.price,
+	pv.visit_date
+FROM
+	person_visits pv
+JOIN person p ON pv.person_id = p.id 
+JOIN person_order po ON po.order_date = pv.visit_date
+JOIN menu m ON po.menu_id = m.id
+JOIN pizzeria pz ON pz.id = pv.pizzeria_id
+WHERE 
+	visit_date = '2022-01-8'
+	AND p.name = 'Dmitriy'
+	AND m.price <= 800;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/f286678e-2f06-4a7d-b49c-d79ae9568385)
 
 Task-08
 ```sql
-
+SELECT p.name FROM person p
+JOIN person_order po ON p.id = po.person_id 
+JOIN menu m ON m.id = po.menu_id
+WHERE (
+		p.address = 'Moscow' OR
+		p.address = 'Samara'
+	) AND (
+		m.pizza_name = 'mushroom pizza' OR
+		m.pizza_name = 'pepperoni pizza'
+	) AND p.gender = 'male'
+ORDER BY 1 DESC;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/c7edcbbf-a1f5-43d2-80a5-6aed341a7b3b)
 
 Task-09
 ```sql
-
+SELECT p.name FROM person p
+JOIN person_order po ON p.id = po.person_id 
+JOIN menu m ON m.id = po.menu_id
+WHERE (
+		m.pizza_name = 'cheese pizza' OR
+		m.pizza_name = 'pepperoni pizza'
+	) AND p.gender = 'female'
+ORDER BY 1;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/c3b4f29b-2dff-4955-b626-5d5bb51a2b9b)
 
 Task-10
 ```sql
-
+SELECT p1.name, p2.name, p1.address FROM person p1
+JOIN person p2 ON p1.address = p2.address
+WHERE p2.name > p1.name
+ORDER BY 1, 2, 3;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/698d3f6a-4197-44ba-9721-1f0fe856a7eb)
