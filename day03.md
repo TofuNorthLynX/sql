@@ -161,26 +161,30 @@ INSERT INTO person_visits VALUES(
 ![image](https://github.com/TofuNorthLynX/sql/assets/112647131/95095131-e28c-4d33-bd8c-0fa1554cd127)
 
 Task-10
-```
-INSERT INTO person_visits VALUES(
-	(SELECT MAX(id) FROM person_visits) +1,
+```sql
+INSERT INTO person_order VALUES(
+	(SELECT MAX(id) FROM person_order) +1,
 	(SELECT id FROM person
 	WHERE name = 'Denis'),
 	(SELECT id FROM menu
 	WHERE pizza_name = 'sicilian pizza'), 
 	'2022-02-24'),
-	((SELECT MAX(id) FROM person_visits) +2, 
+	((SELECT MAX(id) FROM person_order) +2, 
 	(SELECT id FROM person
 	WHERE name = 'Irina'),
 	(SELECT id FROM menu
 	WHERE pizza_name = 'sicilian pizza'), 
 	'2022-02-24')
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/2510482a-9e77-454e-9aac-e08a04e4aa50)
 
 Task-11
 ```sql
-
+UPDATE menu
+SET price = (800 - (800 * 10 / 100))
+WHERE pizza_name = 'greek pizza';
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/a8bdcbcd-bb1d-4160-b3ec-786e8afacabf)
 
 Task-12
 ```sql
