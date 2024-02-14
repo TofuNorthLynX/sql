@@ -16,7 +16,7 @@ JOIN help h ON h.customer_id = c.customer_id
 ORDER BY sum DESC LIMIT 3
 ;
 ```
-![image](https://github.com/TofuNorthLynX/sql/assets/112647131/12f5c554-39e2-400f-b289-116e7bd0d0bd)
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/527fb22a-cb19-4b79-9275-2bbd6d2a8e88)
 
 2
 ```sql
