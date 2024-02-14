@@ -58,5 +58,11 @@ ORDER BY avg DESC
 
 5
 ```sql
-
+WITH avgc AS (
+	SELECT AVG(quantity)
+	FROM orders
+)
+DELETE FROM orders
+WHERE quantity > (SELECT * FROM avgc)
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/f35df07a-521b-4f49-996c-35d17e9fed42)
