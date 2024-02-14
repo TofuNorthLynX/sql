@@ -65,4 +65,6 @@ WITH avgc AS (
 DELETE FROM orders
 WHERE quantity > (SELECT * FROM avgc)
 ```
-![image](https://github.com/TofuNorthLynX/sql/assets/112647131/f35df07a-521b-4f49-996c-35d17e9fed42)
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/44088208-bc78-4c6c-b2b4-c5ad9c9fb849)
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/bb402b8d-b34e-456f-826c-6e770eec1a02)
+
