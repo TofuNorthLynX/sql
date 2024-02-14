@@ -1,5 +1,5 @@
 1
-```
+```sql
 WITH sumord AS(
 	SELECT 
 	o.customer_id, 
