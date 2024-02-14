@@ -30,7 +30,7 @@ SET price = (price - (price * 10 / 100))
 WHERE category = 'Clothes'
 ```
 ![image](https://github.com/TofuNorthLynX/sql/assets/112647131/9eca08da-2e74-47ae-bede-af5f1a776984)
-![image](https://github.com/TofuNorthLynX/sql/assets/112647131/b8f4fe24-ea14-4ce5-bfca-06c7c5ace839)
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/4cdc2ec5-9392-47f5-8d9d-9bb8e143651d)
 
 4
 ```sql
