@@ -37,18 +37,36 @@ INSERT INTO person_discounts
 
 Task-02
 ```sql
+SELECT p.name, 
+	m.pizza_name, 
+	m.price, 
+	(m2.price - ((m2.price * pd.discount) / 100)) as discount_price,
+	piz.name as pizzeria_name
+	FROM menu m
 
+JOIN person_order po ON po.menu_id = m.id
+JOIN person p ON p.id = po.person_id
+JOIN person_discounts pd ON pd.person_id = po.person_id
+JOIN menu m2 ON m.id = m2.id
+JOIN pizzeria piz ON piz.id = m.pizzeria_id
+ORDER BY 1, 2, 4 DESC, 5;
 ```
-
-Task-03
-```sql
-
-```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/e3701d31-0e78-4b54-8428-939bcd672818)
 
 Task-04
 ```sql
-
+ALTER TABLE person_discounts 
+	ADD CONSTRAINT ch_nn_person_id CHECK (person_id IS NOT NULL);
+ALTER TABLE person_discounts 
+	ADD CONSTRAINT ch_nn_pizzeria_id CHECK (pizzeria_id IS NOT NULL);
+ALTER TABLE person_discounts 
+	ADD CONSTRAINT ch_nn_discount CHECK (discount IS NOT NULL);
+ALTER TABLE person_discounts 
+	ALTER discount SET DEFAULT 0;
+ALTER TABLE person_discounts 
+	ADD CONSTRAINT ch_range_discount CHECK (discount BETWEEN 0 AND 100);
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/5c45908c-c672-4320-a4b5-c27ed06b6717)
 
 Task-05
 ```sql
