@@ -19,23 +19,78 @@ ORDER BY 2 DESC, 1 LIMIT 4;
 
 Task-02
 ```sql
+WITH vis AS (
+	SELECT piz.name, COUNT(pv.id), 'visit' as action_type
+	FROM person_visits pv
+	JOIN pizzeria piz ON piz.id = pv.pizzeria_id
+	GROUP BY 1
+	ORDER BY 2 DESC, 1 LIMIT 3
+), 
+ord AS (
+	SELECT piz.name, COUNT(po.id), 'order' as action_type
+	FROM person_order po
+	JOIN menu m ON m.id = po.menu_id
+	JOIN pizzeria piz ON piz.id = m.pizzeria_id
+	GROUP BY 1
+	ORDER BY 2 DESC, 1 LIMIT 3
+)
 
+SELECT * FROM vis
+UNION ALL
+SELECT * FROM ord
+ORDER BY 3,  2 DESC;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/b2db6199-9970-4499-942a-e5240fe99039)
 
 Task-03
 ```sql
-
+WITH vis AS (
+	SELECT piz.name, COUNT(pv.id)
+	FROM person_visits pv
+	JOIN pizzeria piz ON piz.id = pv.pizzeria_id
+	GROUP BY 1
+), 
+ord AS (
+	SELECT piz.name, COUNT(po.id)
+	FROM person_order po
+	JOIN menu m ON m.id = po.menu_id
+	JOIN pizzeria piz ON piz.id = m.pizzeria_id
+	GROUP BY 1
+),
+alll AS (
+SELECT * FROM vis
+UNION ALL
+SELECT * FROM ord
+)
+SELECT a.name, SUM(a.count) as total_count 
+FROM alll a
+GROUP BY 1
+ORDER BY 2 DESC, 1;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/4581907f-28d2-4110-9f85-f7811545904d)
 
 Task-04
 ```sql
-
+WITH vis AS (
+	SELECT p.name, COUNT(pv.id) as count_of_visits 
+	FROM person_visits pv
+	JOIN person p ON p.id = pv.person_id
+	GROUP BY 1
+)
+SELECT * FROM vis
+WHERE count_of_visits > 2 -- у нас нет более 3 заказов, как надо по заданию :(
+ORDER BY 2 DESC, 1
+;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/1e999e3c-472b-4f96-b9ca-c5f3a56549e3)
 
 Task-05
 ```sql
-
+SELECT DISTINCT p.name FROM person_order po
+JOIN person p ON p.id = po.person_id
+ORDER BY 1;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/555406ce-9335-468b-bf1c-1b69cba9fd6d)
 
 Task-06
 ```sql
