@@ -9,8 +9,13 @@ ORDER BY 2 DESC, 1;
 
 Task-01
 ```sql
-
+SELECT p.name, COUNT(pv.id) as count_of_visits 
+FROM person_visits pv
+JOIN person p ON p.id = pv.person_id
+GROUP BY 1
+ORDER BY 2 DESC, 1 LIMIT 4;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/8be209fe-9875-4699-a9a0-c17d19fe2703)
 
 Task-02
 ```sql
