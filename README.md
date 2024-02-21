@@ -1,8 +1,8 @@
-# Day 06 - Piscine SQL
+# Day 07 - Piscine SQL
 
-## _Let's improve customer experience_
+## _Aggregated data is more informative, isn't it?_
 
-Resume: Today you will see how to add a new business feature into our data model
+Resume: Today you will see how to use specific OLAP constructions to get a “Value” from data
 
 ## Contents
 
@@ -13,34 +13,41 @@ Resume: Today you will see how to add a new business feature into our data model
 3. [Chapter III](#chapter-iii) \
     3.1. [Rules of the day](#rules-of-the-day)  
 4. [Chapter IV](#chapter-iv) \
-    4.1. [Exercise 00 - Discounts, discounts , everyone loves discounts](#exercise-00-discounts-discounts-everyone-loves-discounts)  
+    4.1. [Exercise 00 - Simple aggregated information](#exercise-00-simple-aggregated-information)  
 5. [Chapter V](#chapter-v) \
-    5.1. [Exercise 01 - Let’s set personal discounts](#exercise-01-lets-set-personal-discounts)  
+    5.1. [Exercise 01 - Let’s see real names](#exercise-01-lets-see-real-names)  
 6. [Chapter VI](#chapter-vi) \
-    6.1. [Exercise 02 - Let’s recalculate a history of orders.](#exercise-02-lets-recalculate-a-history-of-orders)  
+    6.1. [Exercise 02 - Restaurants statistics](#exercise-02-restaurants-statistics)  
 7. [Chapter VII](#chapter-vii) \
-    7.1. [Exercise 03 - Improvements are in a way](#exercise-03-improvements-are-in-a-way)  
+    7.1. [Exercise 03 - Restaurants statistics #2](#exercise-03-restaurants-statistics-2)  
 8. [Chapter VIII](#chapter-viii) \
-    8.1. [Exercise 04 - We need more Data Consistency](#exercise-04-we-need-more-data-consistency)
+    8.1. [Exercise 04 - Clause for groups](#exercise-04-clause-for-groups)
 9. [Chapter IX](#chapter-ix) \
-    9.1. [Exercise 05 - Data Governance Rules](#exercise-05-data-governance-rules)
+    9.1. [Exercise 05 - Person's uniqueness](#exercise-05-persons-uniqueness)
 10. [Chapter X](#chapter-x) \
-    10.1. [Exercise 06 - Let’s automate Primary Key generation](#exercise-06-lets-automate-primary-key-generation)
+    10.1. [Exercise 06 - Restaurant metrics](#exercise-06-restaurant-metrics)
+11. [Chapter XI](#chapter-xi) \
+    11.1. [Exercise 07 - Average global rating](#exercise-07-average-global-rating)
+12. [Chapter XII](#chapter-xii) \
+    12.1. [Exercise 08 - Find pizzeria’s restaurant locations](#exercise-08-find-pizzerias-restaurant-locations)    
+13. [Chapter XIII](#chapter-xiii) \
+    13.1. [Exercise 09 - Explicit type transformation](#exercise-09-explicit-type-transformation)        
 
 ## Chapter I
 ## Preamble
 
-![D06_01](misc/images/D06_01.png)
+![D07_01](misc/images/D07_01.png)
 
-Why is a diamond one of the most durable objects? The reason is in the structure. Every atom knows about his place in diamond’s topology and makes the whole diamond unbreakable. 
+Please take a look at Curve of Usefulness for detailed data in time. Other words, detailed data (means user transactions, facts about products and providers, etc.) are not useful for us from a historical perspective, because we just need to know  some aggregation to describe what was going on a year ago.
 
-Logical structure is like a diamond. If you find an appropriate structure for your own Database Model then you find gold (or diamond :-). There are two aspects of Database Modeling. The first one is a logical view, in other words how your model will smoothly describe the real business world. 
+Why does it happen? The reason is in our analytical mind. Actually we want to concentrate on our business strategy from a historical perspective to set new business goals and we don’t need details. 
 
-![D06_02](misc/images/D06_02.png)
+From a database point of view, “Analytical mind” corresponds to OLAP  traffic (information layer), “details” corresponds to OLTP traffic (raw data layer). Today there is a more flexible pattern to store detailed data and aggregated information in the ecosystem. I am talking about `LakeHouse = DataLake + DataWareHouse`.
 
-On the other hand, your model should solve your functional tasks with minimal impaction. It means, logical model view transforms to physical model view and not just from table and attributes descriptions. But actually, from performance and budget perspectives that are more mainly nowadays. How to find a balance? For this case there are 3 steps to create a very good design. Just take a look at the picture below. 
+If we are talking about historical data then we should mention the “Data lifecycle management” pattern. Simple words, what should we do with old data? TTL (time-to-live), SLA for data, Retention Data Policy, etc. are terms that are in use in Data Governance strategy.
 
-![D06_03](misc/images/D06_03.png)
+![D07_02](misc/images/D07_02.png)
+
 
 
 ## Chapter II
@@ -99,140 +106,204 @@ Persons' visit and persons' order are different entities and don't contain any c
 
 
 ## Chapter IV
-## Exercise 00 - Discounts, discounts , everyone loves discounts
+## Exercise 00 - Simple aggregated information
 
-| Exercise 00: Discounts, discounts , everyone loves discounts |                                                                                                                          |
+| Exercise 00: Simple aggregated information |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex00                                                                                                                     |
-| Files to turn-in                      | `day06_ex00.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex00.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL|
 
-Let’s expand our data model to involve a new business feature.
-Every person wants to see a personal discount and every business wants to be closer for clients.
+Let’s make a simple aggregation, please write a SQL statement that returns person identifiers and corresponding number of visits in any pizzerias and sorting by count of visits in descending mode and sorting in `person_id` in ascending mode. Please take a look at the sample of data below.
 
-Please think about personal discounts for people from one side and pizzeria restaurants from other. Need to create a new relational table (please set a name `person_discounts`) with the next rules.
-- set id attribute like a Primary Key (please take a look on id column in existing tables and choose the same data type)
-- set for attributes person_id and pizzeria_id foreign keys for corresponding tables (data types should be the same like for id columns in corresponding parent tables)
-- please set explicit names for foreign keys constraints by pattern fk_{table_name}_{column_name},  for example `fk_person_discounts_person_id`
-- add a discount attribute to store a value of discount in percent. Remember, discount value can be a number with floats (please just use `numeric` data type). So, please choose the corresponding data type to cover this possibility.
-
+| person_id | count_of_visits |
+| ------ | ------ |
+| 9 | 4 |
+| 4 | 3 |
+| ... | ... | 
 
 
 ## Chapter V
-## Exercise 01 - Let’s set personal discounts
+## Exercise 01 - Let’s see real names
 
-| Exercise 01: Let’s set personal discounts|                                                                                                                          |
+| Exercise 01: Let’s see real names|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex01                                                                                                                     |
-| Files to turn-in                      | `day06_ex01.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex01.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Actually, we created a structure to store our discounts and we are ready to go further and fill our `person_discounts` table with new records.
+Please change a SQL statement from Exercise 00 and return a person name (not identifier). Additional clause is  we need to see only top-4 persons with maximal visits in any pizzerias and sorted by a person name. Please take a look at the example of output data below.
 
-So, there is a table `person_order` that stores the history of a person's orders. Please write a DML statement (`INSERT INTO ... SELECT ...`) that makes  inserts new records into `person_discounts` table based on the next rules.
-- take aggregated state by person_id and pizzeria_id columns 
-- calculate personal discount value by the next pseudo code:
-
-    `if “amount of orders” = 1 then
-        “discount” = 10.5 
-    else if “amount of orders” = 2 then 
-        “discount” = 22
-    else 
-        “discount” = 30`
-
-- to generate a primary key for the person_discounts table please use  SQL construction below (this construction is from the WINDOW FUNCTION  SQL area).
-    
-    `... ROW_NUMBER( ) OVER ( ) AS id ...`
-
+| name | count_of_visits |
+| ------ | ------ |
+| Dmitriy | 4 |
+| Denis | 3 |
+| ... | ... | 
 
 
 
 ## Chapter VI
-## Exercise 02 - Let’s recalculate a history of orders
+## Exercise 02 - Restaurants statistics
 
-| Exercise 02: Let’s recalculate a history of orders|                                                                                                                          |
+| Exercise 02: Restaurants statistics|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex02                                                                                                                     |
-| Files to turn-in                      | `day06_ex02.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex02.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Please write a SQL statement that returns orders with actual price and price with applied discount for each person in the corresponding pizzeria restaurant and sort by person name, and pizza name. Please take a look at the sample of data below.
+Please write a SQL statement to see 3 favorite restaurants by visits and by orders in one list (please add an action_type column with values ‘order’ or ‘visit’, it depends on data from the corresponding table). Please take a look at the sample of data below. The result should be sorted by action_type column in ascending mode and by count column in descending mode.
 
-| name | pizza_name | price | discount_price | pizzeria_name | 
-| ------ | ------ | ------ | ------ | ------ |
-| Andrey | cheese pizza | 800 | 624 | Dominos |
-| Andrey | mushroom pizza | 1100 | 858 | Dominos |
-| ... | ... | ... | ... | ... |
+| name | count | action_type |
+| ------ | ------ | ------ |
+| Dominos | 6 | order |
+| ... | ... | ... |
+| Dominos | 7 | visit |
+| ... | ... | ... |
 
 ## Chapter VII
-## Exercise 03 - Improvements are in a way
+## Exercise 03 - Restaurants statistics #2
 
-| Exercise 03: Improvements are in a way |                                                                                                                          |
+| Exercise 03: Restaurants statistics #2 |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex03                                                                                                                     |
-| Files to turn-in                      | `day06_ex03.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex03.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
+Please write a SQL statement to see restaurants are grouping by visits and by orders and joined with each other by using restaurant name.  
+You can use internal SQLs from Exercise 02 (restaurants by visits and by orders) without limitations of amount of rows.
 
-Actually, we have to make improvements to data consistency from one side and performance tuning from the other side. Please create a multicolumn unique index (with name `idx_person_discounts_unique`) that prevents duplicates of pair values person and pizzeria identifiers.
+Additionally, please add the next rules.
+- calculate a sum of orders and visits for corresponding pizzeria (be aware, not all pizzeria keys are presented in both tables).
+- sort results by `total_count` column in descending mode and by `name` in ascending mode.
+Take a look at the data sample below.
 
-After creation of a new index, please provide any simple SQL statement that shows proof of index usage (by using `EXPLAIN ANALYZE`).
-The example of “proof” is below
-    
-    ...
-    Index Scan using idx_person_discounts_unique on person_discounts
-    ...
+| name | total_count |
+| ------ | ------ |
+| Dominos | 13 |
+| DinoPizza | 9 |
+| ... | ... | 
 
 
 ## Chapter VIII
-## Exercise 04 - We need more Data Consistency
+## Exercise 04 - Clause for groups
 
 
-| Exercise 04: We need more Data Consistency |                                                                                                                          |
+| Exercise 04: Clause for groups |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex04                                                                                                                     |
-| Files to turn-in                      | `day06_ex04.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex04.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
+| **Denied**                               |                                                                                                                          |
+| Syntax construction                        | `WHERE`                                                                                              |
 
-Please add the following constraint rules for existing columns of the `person_discounts` table.
-- person_id column should not be NULL (use constraint name `ch_nn_person_id`)
-- pizzeria_id column should not be NULL (use constraint name `ch_nn_pizzeria_id`)
-- discount column should not be NULL (use constraint name `ch_nn_discount`)
-- discount column should be 0 percent by default
-- discount column should be in a range values from 0 to 100 (use constraint name `ch_range_discount`)
+Please write a SQL statement that returns the person name and corresponding number of visits in any pizzerias if the person has visited more than 3 times (> 3).Please take a look at the sample of data below.
+
+| name | count_of_visits |
+| ------ | ------ |
+| Dmitriy | 4 |
+
 
 
 ## Chapter IX
-## Exercise 05 - Data Governance Rules
+## Exercise 05 - Person's uniqueness
 
 
-| Exercise 05: Data Governance Rules|                                                                                                                          |
+| Exercise 05: Person's uniqueness|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex05                                                                                                                     |
-| Files to turn-in                      | `day06_ex05.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex05.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        |  SQL, DML, DDL                                                                                              |
+| Language                        |  ANSI SQL                                                                                              |
+| **Denied**                               |                                                                                                                          |
+| Syntax construction                        |  `GROUP BY`, any type (`UNION`,...) working with sets                                                                                              |
 
-To satisfy Data Governance Policies need to add comments for the table and table's columns. Let’s apply this policy for the `person_discounts` table. Please add English or Russian comments (it's up to you) that explain what is a business goal of a table and all included attributes. 
+Please write a simple SQL query that returns a list of unique person names who made orders in any pizzerias. The result should be sorted by person name. Please take a look at the sample below.
+
+| name | 
+| ------ |
+| Andrey |
+| Anna | 
+| ... | 
 
 ## Chapter X
-## Exercise 06 - Let’s automate Primary Key generation
+## Exercise 06 - Restaurant metrics
 
 
-| Exercise 06: Let’s automate Primary Key generation|                                                                                                                          |
+| Exercise 06: Restaurant metrics|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex06                                                                                                                     |
-| Files to turn-in                      | `day06_ex06.sql`                                                                                 |
+| Files to turn-in                      | `day07_ex06.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
-| **Denied**                               |                                                                                                                          |
-| SQL Syntax Pattern                        | Don’t use hard-coded value for amount of rows to set a right value for sequence                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Let’s create a Database Sequence with the name `seq_person_discounts` (starting from 1 value) and set a default value for id attribute of `person_discounts` table to take a value from `seq_person_discounts` each time automatically. 
-Please be aware that your next sequence number is 1, in this case please set an actual value for database sequence based on formula “amount of rows in person_discounts table” + 1. Otherwise you will get errors about Primary Key violation constraint.
+Please write a SQL statement that returns the amount of orders, average of price, maximum and minimum prices for sold pizza by corresponding pizzeria restaurant. The result should be sorted by pizzeria name. Please take a look at the data sample below. 
+Round your average price to 2 floating numbers.
+
+| name | count_of_orders | average_price | max_price | min_price |
+| ------ | ------ | ------ | ------ | ------ |
+| Best Pizza | 5 | 780 | 850 | 700 |
+| DinoPizza | 5 | 880 | 1000 | 800 |
+| ... | ... | ... | ... | ... |
+
+
+## Chapter XI
+## Exercise 07 - Average global rating
+
+
+| Exercise 07: Average global rating|                                                                                                                          |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Turn-in directory                     | ex07                                                                                                                     |
+| Files to turn-in                      | `day07_ex07.sql`                                                                                 |
+| **Allowed**                               |                                                                                                                          |
+| Language                        | ANSI SQL                                                                                              |
+
+Please write a SQL statement that returns a common average rating (the output attribute name is global_rating) for all restaurants. Round your average rating to 4 floating numbers.
+
+
+## Chapter XII
+## Exercise 08 - Find pizzeria’s restaurant locations
+
+
+| Exercise 08: Find pizzeria’s restaurant locations|                                                                                                                          |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Turn-in directory                     | ex08                                                                                                                     |
+| Files to turn-in                      | `day07_ex08.sql`                                                                                 |
+| **Allowed**                               |                                                                                                                          |
+| Language                        | ANSI SQL                                                                                              |
+
+We know about personal addresses from our data. Let’s imagine, that particular person visits pizzerias in his/her city only. Please write a SQL statement that returns address, pizzeria name and amount of persons’ orders. The result should be sorted by address and then by restaurant name. Please take a look at the sample of output data below.
+
+| address | name |count_of_orders |
+| ------ | ------ |------ |
+| Kazan | Best Pizza |4 |
+| Kazan | DinoPizza |4 |
+| ... | ... | ... | 
+
+
+## Chapter XIII
+## Exercise 09 - Explicit type transformation
+
+
+| Exercise 09: Explicit type transformation|                                                                                                                          |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Turn-in directory                     | ex09                                                                                                                     |
+| Files to turn-in                      | `day07_ex09.sql`                                                                                 |
+| **Allowed**                               |                                                                                                                          |
+| Language                        | ANSI SQL                                                                                              |
+
+Please write a SQL statement that returns aggregated information by person’s address , the result of “Maximal Age - (Minimal Age  / Maximal Age)” that is presented as a formula column, next one is average age per address and the result of comparison between formula and average columns (other words, if formula is greater than  average then True, otherwise False value).
+
+The result should be sorted by address column. Please take a look at the sample of output data below.
+
+| address | formula |average | comparison |
+| ------ | ------ |------ |------ |
+| Kazan | 44.71 |30.33 | true |
+| Moscow | 20.24 | 18.5 | true |
+| ... | ... | ... | ... |
+
 
