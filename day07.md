@@ -131,13 +131,20 @@ ORDER BY 1, 2;
 
 Task-09
 ```sql
-SELECT 
+WITH tab AS(
+	SELECT 
 	p.address,
 	ROUND(MAX(p.age) - (MIN(p.age)/MAX(p.age))::numeric, 2) as formula,
-	ROUND(AVG(p.age)::numeric, 2) as average,
--- 	IF (formula) > (average) THEN 'True'
--- 	ELSE 'False'
+	ROUND(AVG(p.age)::numeric, 2) as average
 FROM person p
 GROUP BY 1
-ORDER BY 1, 2;
+ORDER BY 1, 2)
+
+SELECT *, 
+	CASE
+		WHEN formula > average THEN 'True'
+		WHEN formula < average THEN 'False'
+	END
+	FROM tab;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/69b918fb-9450-436d-8558-ac13e360a3db)
