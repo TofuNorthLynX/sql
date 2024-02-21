@@ -94,20 +94,50 @@ ORDER BY 1;
 
 Task-06
 ```sql
-
+SELECT 
+	piz.name, 
+	COUNT(po.id) as count_of_orders, 
+	ROUND(AVG(m.price)::numeric, 2) as average_price, 
+	MAX(m.price) as max_price, 
+	MIN(m.price) as min_price 
+	FROM person_order po
+JOIN menu m ON m.id = po.menu_id
+JOIN pizzeria piz ON piz.id = m.pizzeria_id
+GROUP BY 1
+ORDER BY 1;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/9edf9505-68e8-4d38-97e4-b934d716f742)
 
 Task-07
 ```sql
-
+SELECT 
+	ROUND(AVG(piz.rating)::numeric, 4) as global_rating
+	FROM pizzeria piz
+;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/46e4ebf2-b498-450d-964a-55d331206f1a)
 
 Task-08
 ```sql
-
+SELECT p.address, piz.name, COUNT(po.id)
+FROM person_order po
+JOIN menu m ON m.id = po.menu_id
+JOIN pizzeria piz ON piz.id = m.pizzeria_id
+JOIN person p ON p.id = po.person_id
+GROUP BY 1, 2
+ORDER BY 1, 2;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/e6bc70fe-c178-462b-af74-b3e02cc09c55)
 
 Task-09
 ```sql
-
+SELECT 
+	p.address,
+	ROUND(MAX(p.age) - (MIN(p.age)/MAX(p.age))::numeric, 2) as formula,
+	ROUND(AVG(p.age)::numeric, 2) as average,
+-- 	IF (formula) > (average) THEN 'True'
+-- 	ELSE 'False'
+FROM person p
+GROUP BY 1
+ORDER BY 1, 2;
 ```
