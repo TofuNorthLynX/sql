@@ -1,8 +1,8 @@
-# Day 06 - Piscine SQL
+# Day 04 - Piscine SQL
 
-## _Let's improve customer experience_
+## _Snapshots, virtual tables… What is going on?_
 
-Resume: Today you will see how to add a new business feature into our data model
+Resume: Today you will see how to use a virtual view and physical snapshot of data
 
 ## Contents
 
@@ -13,34 +13,51 @@ Resume: Today you will see how to add a new business feature into our data model
 3. [Chapter III](#chapter-iii) \
     3.1. [Rules of the day](#rules-of-the-day)  
 4. [Chapter IV](#chapter-iv) \
-    4.1. [Exercise 00 - Discounts, discounts , everyone loves discounts](#exercise-00-discounts-discounts-everyone-loves-discounts)  
+    4.1. [Exercise 00 - Let’s create separated views for persons](#exercise-00-lets-create-separated-views-for-persons)  
 5. [Chapter V](#chapter-v) \
-    5.1. [Exercise 01 - Let’s set personal discounts](#exercise-01-lets-set-personal-discounts)  
+    5.1. [Exercise 01 - From parts to common view](#exercise-01-from-parts-to-common-view)  
 6. [Chapter VI](#chapter-vi) \
-    6.1. [Exercise 02 - Let’s recalculate a history of orders.](#exercise-02-lets-recalculate-a-history-of-orders)  
+    6.1. [Exercise 02 - “Store” generated dates in one place](#exercise-02-store-generated-dates-in-one-place)  
 7. [Chapter VII](#chapter-vii) \
-    7.1. [Exercise 03 - Improvements are in a way](#exercise-03-improvements-are-in-a-way)  
+    7.1. [Exercise 03 - Find missing visit days with Database View](#exercise-03-find-missing-visit-days-with-database-view)  
 8. [Chapter VIII](#chapter-viii) \
-    8.1. [Exercise 04 - We need more Data Consistency](#exercise-04-we-need-more-data-consistency)
+    8.1. [Exercise 04 - Let’s find something from Set Theory](#exercise-04-lets-find-something-from-set-theory)
 9. [Chapter IX](#chapter-ix) \
-    9.1. [Exercise 05 - Data Governance Rules](#exercise-05-data-governance-rules)
+    9.1. [Exercise 05 - Let’s calculate a discount price for each person](#exercise-05-lets-calculate-a-discount-price-for-each-person)
 10. [Chapter X](#chapter-x) \
-    10.1. [Exercise 06 - Let’s automate Primary Key generation](#exercise-06-lets-automate-primary-key-generation)
+    10.1. [Exercise 06 - Materialization from virtualization](#exercise-06-materialization-from-virtualization)
+11. [Chapter XI](#chapter-xi) \
+    11.1. [Exercise 07 - Refresh our state](#exercise-07-refresh-our-state)
+12. [Chapter XII](#chapter-xii) \
+    12.1. [Exercise 08 - Just clear our database](#exercise-08-just-clear-our-database)
 
 ## Chapter I
 ## Preamble
 
-![D06_01](misc/images/D06_01.png)
+![D04_02](misc/images/D04_02.png)
 
-Why is a diamond one of the most durable objects? The reason is in the structure. Every atom knows about his place in diamond’s topology and makes the whole diamond unbreakable. 
+Why do we need virtual tables and materialized views in databases? Databases are just tables, aren't they? 
+No, actually not. Databases are similar for object-oriented language. Just recall, you have a lot of abstraction in Java (I mean Java Interfaces). We need abstraction to achieve “Clean Architecture” and change objects with minimal effect on dependencies (sometimes it’s working :-). 
 
-Logical structure is like a diamond. If you find an appropriate structure for your own Database Model then you find gold (or diamond :-). There are two aspects of Database Modeling. The first one is a logical view, in other words how your model will smoothly describe the real business world. 
+Moreover, there is a specific architectures’ pattern in the Relational Database with the name ANSI/SPARK.
+This pattern splits objects on three levels: 
+- external level
+- conceptual level
+- internal level
 
-![D06_02](misc/images/D06_02.png)
+Therefore we can say that Virtual Tables and Materialized Views are physical interfaces between tables with data and user / application.
+So, what is the difference then between 2 objects? The main difference is in the “freshness of data”. Below , you can see behaviors of these objects in graphical representation.
 
-On the other hand, your model should solve your functional tasks with minimal impaction. It means, logical model view transforms to physical model view and not just from table and attributes descriptions. But actually, from performance and budget perspectives that are more mainly nowadays. How to find a balance? For this case there are 3 steps to create a very good design. Just take a look at the picture below. 
+|  |  |
+| ------ | ------ |
+| View is a continuous object with the same data like in the underlying table(s), that are used to create this view. Other words, if we select data from view, view reroutes our query to underlying objects and then returns results for us. | ![D04_03](misc/images/D04_03.png) |
+| ![D04_04](misc/images/D04_04.png) | Materialized View is a discrete object. Other words, we need to wait when the Materialized View will be refreshed based on an “event trigger” (for example, time schedule). This object always is behind actual data in underlying tables. |
 
-![D06_03](misc/images/D06_03.png)
+Also, there are “a few” additional differences between View and Materialized View.
+- Virtual Table can work with `INSERT/UPDATE/DELETE` traffic but with some restrictions. 
+- Virtual Tables can have “Instead Of” Triggers to make a better control of incoming `INSERT/UPDATE/DELETE` traffic.
+- Materialized View is ReadOnly object for `INSERT/UPDATE/DELETE` traffic
+- Materialized Views can have user defined indexes on columns to speed up queries
 
 
 ## Chapter II
@@ -62,7 +79,7 @@ On the other hand, your model should solve your functional tasks with minimal im
 ## Rules of the day
 
 - Please make sure you have an own database and access for it on your PostgreSQL cluster. 
-- Please download a [script](materials/model.sql) with Database Model here and apply the script to your database (you can use command line with psql or just run it through any IDE, for example DataGrip from JetBrains or pgAdmin from PostgreSQL community). **Our knowledge way is incremental and linear therefore please be aware all changes that you made in Day03 during exercises 07-13 and in Day04 during exercise 07 should be on place (its similar like in real world , when we applied a release and need to be consistency with data for new changes).**
+- Please download a [script](materials/model.sql) with Database Model here and apply the script to your database (you can use command line with psql or just run it through any IDE, for example DataGrip from JetBrains or pgAdmin from PostgreSQL community). **Our knowledge way is incremental and linear therefore please be aware all changes that you made in Day03 during exercises 07-13 should be on place (its similar like in real world , when we applied a release and need to be consistency with data for new changes).**
 - All tasks contain a list of Allowed and Denied sections with listed database options, database types, SQL constructions etc. Please have a look at the section before you start.
 - Please take a look at the Logical View of our Database Model. 
 
@@ -95,144 +112,163 @@ On the other hand, your model should solve your functional tasks with minimal im
 - field menu_id - foreign key to menu
 - field order_date - date (for example 2022-01-01) of person order 
 
-Persons' visit and persons' order are different entities and don't contain any correlation between data. For example, a client can be in one restaurant (just looking at menu) and in this time make an order in different one by phone or by mobile application. Or another case,  just be at home and again make a call with order without any visits.
-
+Persons' visit and persons' order are different entities and don't contain any correlation between data. For example, a client can be in one restraunt (just looking at menu) and in this time make an order in different one by phone or by mobile application. Or another case,  just be at home and again make a call with order without any visits.
 
 ## Chapter IV
-## Exercise 00 - Discounts, discounts , everyone loves discounts
+## Exercise 00 - Let’s create separated views for persons
 
-| Exercise 00: Discounts, discounts , everyone loves discounts |                                                                                                                          |
+| Exercise 00: Let’s create separated views for persons |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex00                                                                                                                     |
-| Files to turn-in                      | `day06_ex00.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex00.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Let’s expand our data model to involve a new business feature.
-Every person wants to see a personal discount and every business wants to be closer for clients.
-
-Please think about personal discounts for people from one side and pizzeria restaurants from other. Need to create a new relational table (please set a name `person_discounts`) with the next rules.
-- set id attribute like a Primary Key (please take a look on id column in existing tables and choose the same data type)
-- set for attributes person_id and pizzeria_id foreign keys for corresponding tables (data types should be the same like for id columns in corresponding parent tables)
-- please set explicit names for foreign keys constraints by pattern fk_{table_name}_{column_name},  for example `fk_person_discounts_person_id`
-- add a discount attribute to store a value of discount in percent. Remember, discount value can be a number with floats (please just use `numeric` data type). So, please choose the corresponding data type to cover this possibility.
-
+Please create 2 Database Views (with similar attributes like the original table) based on simple filtering of gender of persons. Set the corresponding names for the database views: `v_persons_female` and `v_persons_male`.
 
 
 ## Chapter V
-## Exercise 01 - Let’s set personal discounts
+## Exercise 01 - From parts to common view
 
-| Exercise 01: Let’s set personal discounts|                                                                                                                          |
+| Exercise 01: From parts to common view|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex01                                                                                                                     |
-| Files to turn-in                      | `day06_ex01.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex01.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Actually, we created a structure to store our discounts and we are ready to go further and fill our `person_discounts` table with new records.
+Please use 2 Database Views from Exercise #00 and write SQL to get female and male person names in one list. Please set the order by person name. The sample of data is presented below.
 
-So, there is a table `person_order` that stores the history of a person's orders. Please write a DML statement (`INSERT INTO ... SELECT ...`) that makes  inserts new records into `person_discounts` table based on the next rules.
-- take aggregated state by person_id and pizzeria_id columns 
-- calculate personal discount value by the next pseudo code:
-
-    `if “amount of orders” = 1 then
-        “discount” = 10.5 
-    else if “amount of orders” = 2 then 
-        “discount” = 22
-    else 
-        “discount” = 30`
-
-- to generate a primary key for the person_discounts table please use  SQL construction below (this construction is from the WINDOW FUNCTION  SQL area).
-    
-    `... ROW_NUMBER( ) OVER ( ) AS id ...`
-
-
+| name |
+| ------ |
+| Andrey |
+| Anna |
+| ... |
 
 
 ## Chapter VI
-## Exercise 02 - Let’s recalculate a history of orders
+## Exercise 02 - “Store” generated dates in one place
 
-| Exercise 02: Let’s recalculate a history of orders|                                                                                                                          |
+| Exercise 02: “Store” generated dates in one place|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex02                                                                                                                     |
-| Files to turn-in                      | `day06_ex02.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex02.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
+| SQL Syntax Construction                        | `generate_series(...)`                                                                                              |
 
-Please write a SQL statement that returns orders with actual price and price with applied discount for each person in the corresponding pizzeria restaurant and sort by person name, and pizza name. Please take a look at the sample of data below.
+Please create a Database View (with name `v_generated_dates`) which should be “store” generated dates from 1st to 31th of January 2022 in DATE type. Don’t forget about order for the generated_date column.  
 
-| name | pizza_name | price | discount_price | pizzeria_name | 
-| ------ | ------ | ------ | ------ | ------ |
-| Andrey | cheese pizza | 800 | 624 | Dominos |
-| Andrey | mushroom pizza | 1100 | 858 | Dominos |
-| ... | ... | ... | ... | ... |
+| generated_date |
+| ------ |
+| 2022-01-01 |
+| 2022-01-02 |
+| ... |
+
 
 ## Chapter VII
-## Exercise 03 - Improvements are in a way
+## Exercise 03 - Find missing visit days with Database View
 
-| Exercise 03: Improvements are in a way |                                                                                                                          |
+| Exercise 03: Find missing visit days with Database View |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex03                                                                                                                     |
-| Files to turn-in                      | `day06_ex03.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex03.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
 
-Actually, we have to make improvements to data consistency from one side and performance tuning from the other side. Please create a multicolumn unique index (with name `idx_person_discounts_unique`) that prevents duplicates of pair values person and pizzeria identifiers.
+Please write a SQL statement which returns missing days for persons’ visits in January of 2022. Use `v_generated_dates` view for that task and sort the result by missing_date column. The sample of data is presented below.
 
-After creation of a new index, please provide any simple SQL statement that shows proof of index usage (by using `EXPLAIN ANALYZE`).
-The example of “proof” is below
-    
-    ...
-    Index Scan using idx_person_discounts_unique on person_discounts
-    ...
-
+| missing_date |
+| ------ |
+| 2022-01-11 |
+| 2022-01-12 |
+| ... |
 
 ## Chapter VIII
-## Exercise 04 - We need more Data Consistency
+## Exercise 04 - Let’s find something from Set Theory
 
 
-| Exercise 04: We need more Data Consistency |                                                                                                                          |
+| Exercise 04: Let’s find something from Set Theory |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex04                                                                                                                     |
-| Files to turn-in                      | `day06_ex04.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex04.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Please add the following constraint rules for existing columns of the `person_discounts` table.
-- person_id column should not be NULL (use constraint name `ch_nn_person_id`)
-- pizzeria_id column should not be NULL (use constraint name `ch_nn_pizzeria_id`)
-- discount column should not be NULL (use constraint name `ch_nn_discount`)
-- discount column should be 0 percent by default
-- discount column should be in a range values from 0 to 100 (use constraint name `ch_range_discount`)
+Please write a SQL statement which satisfies a formula `(R - S)∪(S - R)` .
+Where R is the `person_visits` table with filter by 2nd of January 2022, S is also `person_visits` table but with a different filter by 6th of January 2022. Please make your calculations with sets under the `person_id` column and this column will be alone in a result. The result please sort by `person_id` column and your final SQL please present in `v_symmetric_union` (*) database view.
+
+(*) to be honest, the definition “symmetric union” doesn’t exist in Set Theory. This is the author's interpretation, the main idea is based on the existing rule of symmetric difference. 
+
 
 
 ## Chapter IX
-## Exercise 05 - Data Governance Rules
+## Exercise 05 - Let’s calculate a discount price for each person
 
 
-| Exercise 05: Data Governance Rules|                                                                                                                          |
+| Exercise 05: Let’s calculate a discount price for each person |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex05                                                                                                                     |
-| Files to turn-in                      | `day06_ex05.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex05.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        |  SQL, DML, DDL                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-To satisfy Data Governance Policies need to add comments for the table and table's columns. Let’s apply this policy for the `person_discounts` table. Please add English or Russian comments (it's up to you) that explain what is a business goal of a table and all included attributes. 
+Please create a Database View `v_price_with_discount` that returns a person's orders with person names, pizza names, real price and calculated column `discount_price` (with applied 10% discount and satisfies formula `price - price*0.1`). The result please sort by person name and pizza name and make a round for `discount_price` column to integer type. Please take a look at a sample result below.
+
+
+| name |  pizza_name | price | discount_price |
+| ------ | ------ | ------ | ------ | 
+| Andrey | cheese pizza | 800 | 720 | 
+| Andrey | mushroom pizza | 1100 | 990 |
+| ... | ... | ... | ... |
+
+
+
 
 ## Chapter X
-## Exercise 06 - Let’s automate Primary Key generation
+## Exercise 06 - Materialization from virtualization
 
 
-| Exercise 06: Let’s automate Primary Key generation|                                                                                                                          |
+| Exercise 06: Materialization from virtualization |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex06                                                                                                                     |
-| Files to turn-in                      | `day06_ex06.sql`                                                                                 |
+| Files to turn-in                      | `day04_ex06.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | SQL, DML, DDL                                                                                              |
-| **Denied**                               |                                                                                                                          |
-| SQL Syntax Pattern                        | Don’t use hard-coded value for amount of rows to set a right value for sequence                                                                                              |
+| Language                        | ANSI SQL                                                                                              |
 
-Let’s create a Database Sequence with the name `seq_person_discounts` (starting from 1 value) and set a default value for id attribute of `person_discounts` table to take a value from `seq_person_discounts` each time automatically. 
-Please be aware that your next sequence number is 1, in this case please set an actual value for database sequence based on formula “amount of rows in person_discounts table” + 1. Otherwise you will get errors about Primary Key violation constraint.
+Please create a Materialized View `mv_dmitriy_visits_and_eats` (with data included) based on SQL statement that finds the name of pizzeria Dmitriy visited on January 8, 2022 and could eat pizzas for less than 800 rubles (this SQL you can find out at Day #02 Exercise #07). 
+
+To check yourself you can write SQL to Materialized View `mv_dmitriy_visits_and_eats` and compare results with your previous query.
+
+
+## Chapter XI
+## Exercise 07 - Refresh our state
+
+
+| Exercise 07: Refresh our state|                                                                                                                          |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Turn-in directory                     | ex07                                                                                                                     |
+| Files to turn-in                      | `day04_ex07.sql`                                                                                 |
+| **Allowed**                               |                                                                                                                          |
+| Language                        | ANSI SQL                                                                                              |
+| **Denied**                               |                                                                                                                          |
+| SQL Syntax Pattern                        | Don’t use direct numbers for identifiers of Primary Key, person and pizzeria                                                                                               |
+
+Let's refresh data in our Materialized View `mv_dmitriy_visits_and_eats` from exercise #06. Before this action, please generate one more Dmitriy visit that satisfies the SQL clause of Materialized View except pizzeria that we can see in a result from exercise #06.
+After adding a new visit please refresh a state of data for `mv_dmitriy_visits_and_eats`.
+
+## Chapter XII
+## Exercise 08 - Just clear our database
+
+
+| Exercise 08: Just clear our database |                                                                                                                          |
+|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Turn-in directory                     | ex08                                                                                                                     |
+| Files to turn-in                      | `day04_ex08.sql`                                                                                 |
+| **Allowed**                               |                                                                                                                          |
+| Language                        | ANSI SQL                                                                                              |           
+
+After all our exercises were born a few Virtual Tables and one Materialized View. Let’s drop them!
+
 
