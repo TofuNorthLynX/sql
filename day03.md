@@ -188,10 +188,27 @@ WHERE pizza_name = 'greek pizza';
 
 Task-12
 ```sql
-
+INSERT INTO person_order(id, person_id, menu_id, order_date)
+SELECT
+	generate_series((SELECT MAX(id) FROM person_order) + 1,
+			(SELECT MAX(id) FROM person) + 
+			(SELECT MAX(id) FROM person_order), 
+			1),
+	generate_series((SELECT MIN(id) FROM person), 
+			(SELECT MAX(id) FROM person)), 
+			(SELECT id FROM menu 
+			WHERE pizza_name = 'greek pizza'), 
+			'2022-02-25';
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/7f744077-cc37-4fb2-aed0-93fe08b112f9)
 
 Task-13
 ```sql
+DELETE FROM person_order
+WHERE order_date='2022-02-25';
 
+DELETE FROM menu
+WHERE pizza_name='greek pizza';
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/46e0fe13-3cc2-4687-8355-5f27a68b06c1)
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/5d72f255-09ea-43bb-8906-3d8bacf6b734)
