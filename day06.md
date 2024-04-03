@@ -70,10 +70,15 @@ ALTER TABLE person_discounts
 
 Task-05
 ```sql
-
+COMMENT ON TABLE person_discounts IS 'ТАБЛИЦА СО СКИДКАМИ';
+COMMENT ON COLUMN person_discounts.id IS 'ПЕРВИЧНЫЙ КЛЮЧ';
+COMMENT ON COLUMN person_discounts.person_id IS 'ВНЕШНИЙ КЛЮЧ ЧЕЛОВЕКА';
+COMMENT ON COLUMN person_discounts.pizzeria_id IS 'ВНЕШНИЙ КЛЮЧ ПИЦЦЕРИИ';
+COMMENT ON COLUMN person_discounts.discount IS 'ПРОЦЕНТ СКИДКИ'
 ```
 
 Task-06
 ```sql
-
+CREATE SEQUENCE seq_person_discounts;
 ```
+![image](https://github.com/TofuNorthLynX/sql/assets/112647131/18de1435-2d73-4c6b-8d42-0aaf29b6c65b)
