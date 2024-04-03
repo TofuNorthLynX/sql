@@ -1,8 +1,8 @@
-# Day 04 - Piscine SQL
+# Day 09 - Piscine SQL
 
-## _Snapshots, virtual tables… What is going on?_
+## _RDBMS is not just a tables_
 
-Resume: Today you will see how to use a virtual view and physical snapshot of data
+Resume: Today you will see how to create and use functional blocks in Databases
 
 ## Contents
 
@@ -13,51 +13,49 @@ Resume: Today you will see how to use a virtual view and physical snapshot of da
 3. [Chapter III](#chapter-iii) \
     3.1. [Rules of the day](#rules-of-the-day)  
 4. [Chapter IV](#chapter-iv) \
-    4.1. [Exercise 00 - Let’s create separated views for persons](#exercise-00-lets-create-separated-views-for-persons)  
+    4.1. [Exercise 00 - Audit of incoming inserts](#exercise-00-audit-of-incoming-inserts)  
 5. [Chapter V](#chapter-v) \
-    5.1. [Exercise 01 - From parts to common view](#exercise-01-from-parts-to-common-view)  
+    5.1. [Exercise 01 - Audit of incoming updates](#exercise-01-audit-of-incoming-updates)  
 6. [Chapter VI](#chapter-vi) \
-    6.1. [Exercise 02 - “Store” generated dates in one place](#exercise-02-store-generated-dates-in-one-place)  
+    6.1. [Exercise 02 - Audit of incoming deletes](#exercise-02-audit-of-incoming-deletes)  
 7. [Chapter VII](#chapter-vii) \
-    7.1. [Exercise 03 - Find missing visit days with Database View](#exercise-03-find-missing-visit-days-with-database-view)  
+    7.1. [Exercise 03 - Generic Audit](#exercise-03-generic-audit)  
 8. [Chapter VIII](#chapter-viii) \
-    8.1. [Exercise 04 - Let’s find something from Set Theory](#exercise-04-lets-find-something-from-set-theory)
+    8.1. [Exercise 04 - Database View VS Database Function](#exercise-04-database-view-vs-database-function)
 9. [Chapter IX](#chapter-ix) \
-    9.1. [Exercise 05 - Let’s calculate a discount price for each person](#exercise-05-lets-calculate-a-discount-price-for-each-person)
+    9.1. [Exercise 05 - Parameterized Database Function](#exercise-05-parameterized-database-function)
 10. [Chapter X](#chapter-x) \
-    10.1. [Exercise 06 - Materialization from virtualization](#exercise-06-materialization-from-virtualization)
+    10.1. [Exercise 06 - Function like a function-wrapper](#exercise-06-function-like-a-function-wrapper)
 11. [Chapter XI](#chapter-xi) \
-    11.1. [Exercise 07 - Refresh our state](#exercise-07-refresh-our-state)
+    11.1. [Exercise 07 - Different view to find a Minimum](#exercise-07-different-view-to-find-a-minimum)
 12. [Chapter XII](#chapter-xii) \
-    12.1. [Exercise 08 - Just clear our database](#exercise-08-just-clear-our-database)
+    12.1. [Exercise 08 - Fibonacci algorithm is in a function](#exercise-08-fibonacci-algorithm-is-in-a-function)    
+      
 
 ## Chapter I
 ## Preamble
 
-![D04_02](misc/images/D04_02.png)
+![D09_01](misc/images/D09_01.png)
 
-Why do we need virtual tables and materialized views in databases? Databases are just tables, aren't they? 
-No, actually not. Databases are similar for object-oriented language. Just recall, you have a lot of abstraction in Java (I mean Java Interfaces). We need abstraction to achieve “Clean Architecture” and change objects with minimal effect on dependencies (sometimes it’s working :-). 
+There are a lot of functional programming languages in the RDBMS world. We can say mainly about “one-to-one” dependency between a particular RDBMS engine and functional language inside. Please take a look at a sample of these languages.
+- T-SQL
+- PL/SQL
+- SQL
+- PL/PGSQL
+- PL/R
+- PL/Python
+- etc.
 
-Moreover, there is a specific architectures’ pattern in the Relational Database with the name ANSI/SPARK.
-This pattern splits objects on three levels: 
-- external level
-- conceptual level
-- internal level
-
-Therefore we can say that Virtual Tables and Materialized Views are physical interfaces between tables with data and user / application.
-So, what is the difference then between 2 objects? The main difference is in the “freshness of data”. Below , you can see behaviors of these objects in graphical representation.
+Actually, there are two opposite opinions in the IT world about where business logic should be located. The first opinion is on Application Level, the second one in RDBMS directly based on set UDF (User Defined Functions / Procedures / Packages). 
+Everyone chooses their own way to implement business logic. From my point of view, business logic should be in both places and I can say why.  
+Please take a look at the 2 simple architectures below. 
 
 |  |  |
 | ------ | ------ |
-| View is a continuous object with the same data like in the underlying table(s), that are used to create this view. Other words, if we select data from view, view reroutes our query to underlying objects and then returns results for us. | ![D04_03](misc/images/D04_03.png) |
-| ![D04_04](misc/images/D04_04.png) | Materialized View is a discrete object. Other words, we need to wait when the Materialized View will be refreshed based on an “event trigger” (for example, time schedule). This object always is behind actual data in underlying tables. |
+| ![D09_02](misc/images/D09_02.png) | Everything is clear, frontends and backends are working through a special REST API layer that implements whole business logic. That's a really ideal application world. |
+| But, there are always some privileged guys / applications (like IDE) that are working directly with our databases and … our pattern can be broken. | ![D09_03](misc/images/D09_03.png) |
 
-Also, there are “a few” additional differences between View and Materialized View.
-- Virtual Table can work with `INSERT/UPDATE/DELETE` traffic but with some restrictions. 
-- Virtual Tables can have “Instead Of” Triggers to make a better control of incoming `INSERT/UPDATE/DELETE` traffic.
-- Materialized View is ReadOnly object for `INSERT/UPDATE/DELETE` traffic
-- Materialized Views can have user defined indexes on columns to speed up queries
+Just think about it and try to create a clean architecture :-)
 
 
 ## Chapter II
@@ -79,7 +77,7 @@ Also, there are “a few” additional differences between View and Materialized
 ## Rules of the day
 
 - Please make sure you have an own database and access for it on your PostgreSQL cluster. 
-- Please download a [script](materials/model.sql) with Database Model here and apply the script to your database (you can use command line with psql or just run it through any IDE, for example DataGrip from JetBrains or pgAdmin from PostgreSQL community). **Our knowledge way is incremental and linear therefore please be aware all changes that you made in Day03 during exercises 07-13 should be on place (its similar like in real world , when we applied a release and need to be consistency with data for new changes).**
+- Please download a [script](materials/model.sql) with Database Model here and apply the script to your database (you can use command line with psql or just run it through any IDE, for example DataGrip from JetBrains or pgAdmin from PostgreSQL community). **Our knowledge way is incremental and linear therefore please be aware all changes that you made in Day03 during exercises 07-13 and in Day04 during exercise 07 should be on place (its similar like in real world , when we applied a release and need to be consistency with data for new changes).**
 - All tasks contain a list of Allowed and Denied sections with listed database options, database types, SQL constructions etc. Please have a look at the section before you start.
 - Please take a look at the Logical View of our Database Model. 
 
@@ -114,161 +112,208 @@ Also, there are “a few” additional differences between View and Materialized
 
 Persons' visit and persons' order are different entities and don't contain any correlation between data. For example, a client can be in one restraunt (just looking at menu) and in this time make an order in different one by phone or by mobile application. Or another case,  just be at home and again make a call with order without any visits.
 
-## Chapter IV
-## Exercise 00 - Let’s create separated views for persons
 
-| Exercise 00: Let’s create separated views for persons |                                                                                                                          |
+## Chapter IV
+## Exercise 00 - Audit of incoming inserts
+
+| Exercise 00: Audit of incoming inserts |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex00                                                                                                                     |
-| Files to turn-in                      | `day04_ex00.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex00.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        | SQL, DDL, DML|
 
-Please create 2 Database Views (with similar attributes like the original table) based on simple filtering of gender of persons. Set the corresponding names for the database views: `v_persons_female` and `v_persons_male`.
+We want to be stronger with data and don’t want to lose any event of changes. Let’s implement an audit feature for INSERT’s incoming changes. 
+Please create a table `person_audit` with the same structure like a person table but please add a few additional changes. Take a look at the table below with descriptions for each column.
+
+| Column | Type | Description |
+| ------ | ------ | ------ |
+| created | timestamp with time zone | timestamp when a new event has been created.  Default value is a current timestamp and NOT NULL |
+| type_event | char(1) | possible values I (insert), D (delete), U (update). Default value is ‘I’. NOT NULL. Add check constraint `ch_type_event` with possible values ‘I’, ‘U’ and ‘D’ |
+| row_id |bigint | copy of person.id. NOT NULL |
+| name |varchar | copy of person.name (no any constraints) |
+| age |integer | copy of person.age (no any constraints) |
+| gender |varchar | copy of person.gender (no any constraints) |
+| address |varchar | copy of person.address (no any constraints) |
+
+Actually, let’s create a Database Trigger Function with the name `fnc_trg_person_insert_audit` that should process `INSERT` DML traffic and make a copy of a new row to the person_audit table.
+
+Just a hint, if you want to implement a PostgreSQL trigger (please read it in PostgreSQL documentation), you need to make 2 objects: Database Trigger Function and Database Trigger. 
+
+So, please define a Database Trigger with the name `trg_person_insert_audit` with the next options
+- trigger with “FOR EACH ROW” option
+- trigger with “AFTER INSERT”
+- trigger calls fnc_trg_person_insert_audit trigger function
+
+When you are ready with trigger objects then please make an `INSERT` statement into the person table. 
+`INSERT INTO person(id, name, age, gender, address) VALUES (10,'Damir', 22, 'male', 'Irkutsk');`
 
 
 ## Chapter V
-## Exercise 01 - From parts to common view
+## Exercise 01 - Audit of incoming updates
 
-| Exercise 01: From parts to common view|                                                                                                                          |
+| Exercise 01: Audit of incoming updates|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex01                                                                                                                     |
-| Files to turn-in                      | `day04_ex01.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex01.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        | SQL, DDL, DML                                                                                              |
 
-Please use 2 Database Views from Exercise #00 and write SQL to get female and male person names in one list. Please set the order by person name. The sample of data is presented below.
+Let’s continue to implement our audit pattern for the person table. Just define a trigger `trg_person_update_audit` and corresponding trigger function `fnc_trg_person_update_audit` to handle all `UPDATE` traffic on the person table. We should save OLD states of all attribute’s values.
 
-| name |
-| ------ |
-| Andrey |
-| Anna |
-| ... |
+When you are ready please apply UPDATE’s statements below.
+
+`UPDATE person SET name = 'Bulat' WHERE id = 10;`
+`UPDATE person SET name = 'Damir' WHERE id = 10;`
 
 
 ## Chapter VI
-## Exercise 02 - “Store” generated dates in one place
+## Exercise 02 - Audit of incoming deletes
 
-| Exercise 02: “Store” generated dates in one place|                                                                                                                          |
+| Exercise 02: Audit of incoming deletes|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex02                                                                                                                     |
-| Files to turn-in                      | `day04_ex02.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex02.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
-| SQL Syntax Construction                        | `generate_series(...)`                                                                                              |
+| Language                        | SQL, DDL, DML                                                                                              |
 
-Please create a Database View (with name `v_generated_dates`) which should be “store” generated dates from 1st to 31th of January 2022 in DATE type. Don’t forget about order for the generated_date column.  
+Finally, we need to handle `DELETE` statements and make a copy of OLD states for all attribute’s values. Please create a trigger `trg_person_delete_audit` and corresponding trigger function `fnc_trg_person_delete_audit`. 
 
-| generated_date |
-| ------ |
-| 2022-01-01 |
-| 2022-01-02 |
-| ... |
+When you are ready please apply the SQL statement below.
 
+`DELETE FROM person WHERE id = 10;`
 
 ## Chapter VII
-## Exercise 03 - Find missing visit days with Database View
+## Exercise 03 - Generic Audit
 
-| Exercise 03: Find missing visit days with Database View |                                                                                                                          |
+| Exercise 03: Generic Audit |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex03                                                                                                                     |
-| Files to turn-in                      | `day04_ex03.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex03.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        | SQL, DDL, DML                                                                                              |
 
+Actually, there are 3 triggers for one `person` table. Let’s merge all our logic to the one main trigger with the name `trg_person_audit` and a new corresponding trigger function `fnc_trg_person_audit`.
 
-Please write a SQL statement which returns missing days for persons’ visits in January of 2022. Use `v_generated_dates` view for that task and sort the result by missing_date column. The sample of data is presented below.
+Other words, all DML traffic (`INSERT`, `UPDATE`, `DELETE`) should be handled from the one functional block. Please explicitly define a separated IF-ELSE block for every event (I, U, D)!
 
-| missing_date |
-| ------ |
-| 2022-01-11 |
-| 2022-01-12 |
-| ... |
+Additionally, please take the steps below .
+- to drop 3 old triggers from the person table.
+- to drop 3 old trigger functions
+- to make a `TRUNCATE` (or `DELETE`) of all rows in our `person_audit` table
+
+When you are ready, please re-apply the set of DML statements.
+`INSERT INTO person(id, name, age, gender, address)  VALUES (10,'Damir', 22, 'male', 'Irkutsk');`
+`UPDATE person SET name = 'Bulat' WHERE id = 10;`
+`UPDATE person SET name = 'Damir' WHERE id = 10;`
+`DELETE FROM person WHERE id = 10;`
+
 
 ## Chapter VIII
-## Exercise 04 - Let’s find something from Set Theory
+## Exercise 04 - Database View VS Database Function
 
 
-| Exercise 04: Let’s find something from Set Theory |                                                                                                                          |
+| Exercise 04: Database View VS Database Function |                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex04                                                                                                                     |
-| Files to turn-in                      | `day04_ex04.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex04.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        | SQL, DDL, DML                                                                                              |
 
-Please write a SQL statement which satisfies a formula `(R - S)∪(S - R)` .
-Where R is the `person_visits` table with filter by 2nd of January 2022, S is also `person_visits` table but with a different filter by 6th of January 2022. Please make your calculations with sets under the `person_id` column and this column will be alone in a result. The result please sort by `person_id` column and your final SQL please present in `v_symmetric_union` (*) database view.
+As you remember, we created 2 database views to separate data from the person tables by gender attribute. 
+Please define 2 SQL-functions (please be aware, not pl/pgsql-functions) with names
+- `fnc_persons_female` (should return female persons)
+- `fnc_persons_male` (should return male persons)
 
-(*) to be honest, the definition “symmetric union” doesn’t exist in Set Theory. This is the author's interpretation, the main idea is based on the existing rule of symmetric difference. 
+To check yourself and call a function, you can make a statement like below (amazing! you can work with a function like with a virtual table!). 
 
+    SELECT *
+    FROM fnc_persons_male();
+
+    SELECT *
+    FROM fnc_persons_female();
 
 
 ## Chapter IX
-## Exercise 05 - Let’s calculate a discount price for each person
+## Exercise 05 - Parameterized Database Function
 
 
-| Exercise 05: Let’s calculate a discount price for each person |                                                                                                                          |
+| Exercise 05: Parameterized Database Function|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex05                                                                                                                     |
-| Files to turn-in                      | `day04_ex05.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex05.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        |  SQL, DDL, DML                                                                                               |
 
-Please create a Database View `v_price_with_discount` that returns a person's orders with person names, pizza names, real price and calculated column `discount_price` (with applied 10% discount and satisfies formula `price - price*0.1`). The result please sort by person name and pizza name and make a round for `discount_price` column to integer type. Please take a look at a sample result below.
+Looks like 2 functions from exercise 04 need a more generic approach. Please before our further steps drop these functions from the database. 
+Write a common SQL-function (please be aware, not pl/pgsql-function) with the name `fnc_persons`. This function should have an `IN` parameter pgender with default value = ‘female’. 
 
+To check yourself and call a function, you can make a statement like below (wow! you can work with a function like with a virtual table but with more flexibilities!). 
 
-| name |  pizza_name | price | discount_price |
-| ------ | ------ | ------ | ------ | 
-| Andrey | cheese pizza | 800 | 720 | 
-| Andrey | mushroom pizza | 1100 | 990 |
-| ... | ... | ... | ... |
+    select *
+    from fnc_persons(pgender := 'male');
 
-
+    select *
+    from fnc_persons();
 
 
 ## Chapter X
-## Exercise 06 - Materialization from virtualization
+## Exercise 06 - Function like a function-wrapper
 
 
-| Exercise 06: Materialization from virtualization |                                                                                                                          |
+| Exercise 06: Function like a function-wrapper|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex06                                                                                                                     |
-| Files to turn-in                      | `day04_ex06.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex06.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
+| Language                        | SQL, DDL, DML                                                                                              |
 
-Please create a Materialized View `mv_dmitriy_visits_and_eats` (with data included) based on SQL statement that finds the name of pizzeria Dmitriy visited on January 8, 2022 and could eat pizzas for less than 800 rubles (this SQL you can find out at Day #02 Exercise #07). 
+Let’s look at pl/pgsql functions right now. 
 
-To check yourself you can write SQL to Materialized View `mv_dmitriy_visits_and_eats` and compare results with your previous query.
+Please create a pl/pgsql function  `fnc_person_visits_and_eats_on_date` based on SQL statement that finds the names of pizzerias which person (`IN` pperson parameter with default value is ‘Dmitriy’) visited and in which he could buy pizza for less than the given sum in rubles (`IN` pprice parameter with default value is 500) on the specific date (`IN` pdate parameter with default value is 8th of January 2022). 
+
+To check yourself and call a function, you can make a statement like below.
+
+    select *
+    from fnc_person_visits_and_eats_on_date(pprice := 800);
+
+    select *
+    from fnc_person_visits_and_eats_on_date(pperson := 'Anna',pprice := 1300,pdate := '2022-01-01');
 
 
 ## Chapter XI
-## Exercise 07 - Refresh our state
+## Exercise 07 - Different view to find a Minimum
 
 
-| Exercise 07: Refresh our state|                                                                                                                          |
+| Exercise 07: Different view to find a Minimum|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex07                                                                                                                     |
-| Files to turn-in                      | `day04_ex07.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex07.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |
-| **Denied**                               |                                                                                                                          |
-| SQL Syntax Pattern                        | Don’t use direct numbers for identifiers of Primary Key, person and pizzeria                                                                                               |
+| Language                        | SQL, DDL, DML                                                                                              |
 
-Let's refresh data in our Materialized View `mv_dmitriy_visits_and_eats` from exercise #06. Before this action, please generate one more Dmitriy visit that satisfies the SQL clause of Materialized View except pizzeria that we can see in a result from exercise #06.
-After adding a new visit please refresh a state of data for `mv_dmitriy_visits_and_eats`.
+Please write a SQL or pl/pgsql function `func_minimum` (it’s up to you) that has an input parameter is an array of numbers and the function should return a minimum value. 
+
+To check yourself and call a function, you can make a statement like below.
+
+    SELECT func_minimum(VARIADIC arr => ARRAY[10.0, -1.0, 5.0, 4.4]);
+
 
 ## Chapter XII
-## Exercise 08 - Just clear our database
+## Exercise 08 - Fibonacci algorithm is in a function
 
 
-| Exercise 08: Just clear our database |                                                                                                                          |
+| Exercise 08: Fibonacci algorithm is in a function|                                                                                                                          |
 |---------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Turn-in directory                     | ex08                                                                                                                     |
-| Files to turn-in                      | `day04_ex08.sql`                                                                                 |
+| Files to turn-in                      | `day09_ex08.sql`                                                                                 |
 | **Allowed**                               |                                                                                                                          |
-| Language                        | ANSI SQL                                                                                              |           
+| Language                        | SQL, DDL, DML                                                                                              |
 
-After all our exercises were born a few Virtual Tables and one Materialized View. Let’s drop them!
+Please write a SQL or pl/pgsql function `fnc_fibonacci` (it’s up to you) that has an input parameter pstop with type integer (by default is 10) and the function output is a table with all Fibonacci numbers less than pstop.
 
+To check yourself and call a function, you can make a statements like below.
+
+    select * from fnc_fibonacci(100);
+    select * from fnc_fibonacci();
 
